@@ -21,6 +21,7 @@ Lean programming
 Tutorial ideas:
  * some basic algebraic tactics, like cancellation
  * writing a custom induction tactic
+ * implementing John Harrisons `wlog` and invariance tactics.
 
 Lean libraries
 ==============
@@ -50,7 +51,6 @@ Tactics
 -------
 
 additional tactics in mathlib
-
 
 Organizing libraries
 ====================
