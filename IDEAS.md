@@ -55,6 +55,9 @@ additional tactics in mathlib
 Organizing libraries
 ====================
 
+Type classes
+------------
+
  * thinking about type class hierarchies
  * structures vs classes
  * Type vs Prop classes
@@ -62,3 +65,17 @@ Organizing libraries
  * when to use Sort, Type and Prop
  * different way to index: HOL / DTT vs mathematics / category theory
 
+(Data) Types
+------------
+
+ * sometimes a more general structure makes it simpler (list A vs list_of_ints)
+ * map, seq, bind, relator, ...
+ * order structures
+ * different induction, recursion schemas
+ * (equivalence) relations between types
+
+Dependent Types
+---------------
+
+ * how to handles indexed types especially rewriting
+ * how to avoid parametered types
