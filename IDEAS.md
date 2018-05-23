@@ -6,6 +6,12 @@ Lean foundation
 Lean programming
 ================
 
+ * advanced: monad transformers, ...
+
+
+Lean meta programming
+=====================
+
  * basic Lean interfaces: `expr`, `tactic`, `name`, `level`, etc.
  * basic tactics: `apply`, `induction`, `cases`, ...
  * goal management and what are the differences between local variables, constants & meta variables
