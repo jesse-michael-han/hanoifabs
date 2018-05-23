@@ -7,11 +7,9 @@ Lean programming
 ================
 
   * advanced: monad transformers, ...
-
-  * Lean programming:
-    * Monad combinators?
-    * understanding expr / tactic: meta variables, local variables, universes, `mk_mapp`
-    * conv?
+  * Monad combinators?
+  * understanding expr / tactic: meta variables, local variables, universes, `mk_mapp`
+  * conv?
 
 
 Lean meta programming
