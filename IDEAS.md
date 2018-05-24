@@ -23,6 +23,7 @@ Lean meta programming
   * the unifier (`defeq`)
   * the simplifier and how to use it
   * writing interactive tactics: providing a nice interface
+  * expr **elab**
   * user attributes (advanced: caching)
   * user commands
   * advanced: monad transformers, conversions, ...

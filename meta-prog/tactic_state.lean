@@ -1,33 +1,131 @@
-/- The internal `tactic` state  -/
+/- The internal `tactic` state
 
-/- The `tactic` monad contains a lot of internal state, especially the meta (universe) variables,
+The `tactic` monad contains a lot of internal state, especially the meta (universe) variables,
 and their corresponding typing context.
 
-Note on Variables / Constant
-----------------------------
+-/
 
-  * Constants refer to global declarations, and can be looked up in the name space, they are also
-    universe parametric
+open tactic
 
-  * Local variables: we can arbitrarily create them, but if used to fill in a goal, only local
-    variables from the local context are allowed (including the type!)
+/- Variables / Constant -/
+section variables
 
-  * Meta variables: Holes in our proof / term. Represent the goals we want to solve, or holes to
-    fill in when unifying two terms.
+#check (expr.const : name → list level → expr)
+#check (expr.local_const : name → name → binder_info → expr → expr)
+#check (expr.mvar : name → name → expr → expr)
+#check (expr.var : ℕ → expr)
 
-  * Bound variables: are de-Bruijn indexed, i.e. just a natural number refering to the corresponding
-    lambda.
+/-
+  * `const`: Constant refering to global declarations, and can be looked up in the name space,
+    they are also universe parametric.
+
+  * `local_const` (Local variables) can be arbitrarily create, but if used to fill in a goal, only
+    local variables from the local context are allowed (including the type!)
+
+  * `mvar` (Meta variables): Holes in our proof / term. Represent the goals we want to solve, or
+    holes to fill in when unifying two terms.
+
+  * `var` (Bound variables): are de-Bruijn indexed, i.e. just a natural number refering to the
+    corresponding lambda.
+
+    Important: When we write a context `C[var 0]`, this doesn't mean that C is a context of `var 0`
+    but `var i` depending on the number of binders it occurs in:
+      In a context `C[*] = λa, * a`:  `C[var 0] ≝ λa, (var 1) a`
+
+Using bound variables with de-Bruijn indices and free variables with names is called a
+**locally nameless representation**.
 
 Local variables and Meta variables exist also in the level representation. They are only used to
 construct a term. In the final declaration local and meta variables do not occur anymore.
 
+Local variables are often used to **walk** into a binder (i.e. a Π or a λ): a new unique name is
+used to create a `local_const` expression using the pretty print name, the binder information, and
+the type of the bound variable. In the expression itself the bound variable is replaced by the local
+variable.
+
+In the interface `expr` is often used to carry all the information of a local constant.
+-/
+
+section locally_nameless
+
+/- replace local variables by bound variables
+
+expr.abstract_local C[local_const n _ _ _] n ~> C[var 0]
+-/
+#check expr.abstract_local
+#check expr.abstract_locals
+#check expr.abstract
+
+/- instantiate bound variables by terms
+
+expr.instantiate_var C[var 0] t ~> C[t]
+-/
+#check expr.instantiate_univ_params
+#check expr.instantiate_var
+#check expr.instantiate_vars
+
+/- instantiate local variables by terms
+
+expr.instantiate_local n t C[local_const n _ _ _] ~> C[t]
+-/
+#check expr.instantiate_local
+#check expr.instantiate_locals
+
+/- create Π and λ from a term and a list of local variables:
+
+expr.pis [l_0 : t_0, …, l_n : t_n] t[l_0, …, l_n] ~> Π(l_0 : t_0) ⋯ (l_n : t_n), t[var n, …, var 0]
+expr.lambda [l_0 : t_0, …, l_n : t_n] t[l_0, …, l_n] ~> λ(l_0 : t_0) ⋯ (l_n : t_n), t[var n, …, var 0]
+
+The `t_i` are allowed to contain `l_j` for `j < i`. The binder also follows the binder info and
+pretty printing name of the local variable.
+-/
+#check expr.pis
+#check expr.lambdas
+
+
+/- Create a local variable: -/
+#check tactic.mk_local' -- needed to get a unique name
+
+/- Walk into a sequence of Π:
+
+tactic.mk_local_pis (Π(v_0 : t_0)⋯(v_n : t_n), t[var n, …, var 0]) ~>
+  ([v_0, …, v_n], t[v_0, …, v_n])
+-/
+#check tactic.mk_local_pis
+
+end locally_nameless
+
+end variables
+
+section term_construction
+
+/-
 Note on term construction
 -------------------------
 
 Many operations are not type checked. It is possible to write tactics which produce type
-incorrect terms and fail at the very end.
+incorrect terms and fail at a later stage.
 
 -/
+
+example : ℕ := by do
+  -- we contstruct a type incorrect local variable
+  (l : expr) ← return $ expr.local_const `n `n binder_info.default (expr.const `has_add.add []),
+  t ← infer_type l, -- this just returns the type
+  trace t.to_raw_fmt,
+  t ← infer_type (l.app l), -- this produces an error
+  trace t.to_raw_fmt,
+  skip
+
+example : ℕ := by do
+  (l : expr) ← return $ expr.local_const `n `n binder_info.default (expr.const `ℕ []),
+  (m : expr) ← mk_mvar,
+  t ← infer_type (m.app l), -- infer does not unify meta variables
+  trace t.to_raw_fmt,
+  skip
+
+end term_construction
+
 
 /- How does the goal list work?
 
