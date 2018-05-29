@@ -1,3 +1,5 @@
+import analysis.real
+
 /- Tips and Tricks for the Type Class Hierarchy -/
 
 /-
@@ -13,8 +15,7 @@ Type classes are the go to approach to model mathematical abstractions.
     * Uniqueness is important (at least by defeq), otherwise the elaborator fails at unexpected
       places
 
-  * If you're lucky your theory has with only one spine, i.e. a inheritance chain à la
-      A -> B -> C -> D
+  * If you're lucky your theory has only one spine, i.e. a inheritance chain à la A → B → C → D
 
   * Syntactic type classes (pure data):
       `class has_add (α : Type*) := (add : α → α → α)`
@@ -23,7 +24,7 @@ Type classes are the go to approach to model mathematical abstractions.
       * no properties attached
 
   * Property classes (in Prop): (TODO: is this the right name?)
-      `class is_commutatie (α : Type*) (op : α → α → α) := (comm : ∀a b, op a b = op b a)`
+      `class is_commutative (α : Type*) (op : α → α → α) := (comm : ∀a b, op a b = op b a)`
       * in Prop
       * no data elements
       * can depend on other type classes either by inheritance or by parameters
@@ -32,7 +33,7 @@ Type classes are the go to approach to model mathematical abstractions.
 
   * Example: Topological structures in mathlib:
 
-    * topological_space -> uniform_space -> metric_space
+    * `topological_space` → `uniform_space` → `metric_space`
 
     * confusing for mathematicans: each metric space has a uniform space, has a topological space
       assigned
@@ -46,3 +47,49 @@ Type classes are the go to approach to model mathematical abstractions.
       annoying to use, needs a long list of parameters for each abstract definition / theorem
 
 -/
+
+section
+noncomputable theory
+
+variables (α : Type*) (β : Type*)
+
+class topology := (open_sets : set (set α))
+
+def cont [topology α] [topology β] (f : α → β) : Prop :=
+∀s∈topology.open_sets β, f ⁻¹' s ∈ topology.open_sets α
+
+class metric := (dist : α → α → ℝ)
+
+instance metric.to_topology [metric α] : topology α :=
+⟨{s : set α | ∀(x:α), x∈s → ∃ε>0, ∀y, metric.dist x y < ε → y ∈ s}⟩
+
+instance real_topology : topology ℝ :=
+⟨{s : set ℝ | ∀(x:ℝ), x∈s → ∃ε>0, ∀y, abs (x - y) < ε → y ∈ s}⟩
+
+-- now in each metric dist is continuous
+
+lemma cont_dist [metric α] (a : α) : cont α ℝ (metric.dist a) := sorry
+
+-- we have a product topology
+instance prod_topology [topology α] [topology β] : topology (α × β) :=
+⟨{s : set (α × β) | ∀a b, (a, b) ∈ s →
+  ∃u∈topology.open_sets α, a ∈ u ∧ ∃v∈topology.open_sets β, b ∈ v ∧ set.prod u v ⊆ s}⟩
+
+-- but we also want a product metric:
+instance prod_metric [metric α] [metric β] : metric (α × β) :=
+⟨λ⟨a₀, b₀⟩ ⟨a₁, b₁⟩, max (metric.dist a₀ a₁) (metric.dist b₀ b₁)⟩
+
+-- now we have a problem:
+
+example [m₁ : metric α] [m₂ : metric β] :
+  @metric.to_topology (α × β) (prod_metric α β) =
+    @prod_topology α β (metric.to_topology α) (metric.to_topology β) :=
+rfl -- uhuh it is not defeq!
+
+-- set_option pp.implicit true
+example [m₁ : metric α] [m₂ : metric β] (a : α) (b : β) :
+  cont (α × β) ℝ (metric.dist (a, b)) :=
+cont_dist (α × β) (a, b)
+  -- this doesn't work! the product metric is not defeq  to the product topology!
+
+end

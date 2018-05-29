@@ -1,0 +1,6 @@
+[package]
+name = "lean-scratch"
+version = "0.1"
+
+[dependencies]
+mathlib = { path = "/home/hoelzl/Projects/mathlib" }
