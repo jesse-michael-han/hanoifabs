@@ -60,15 +60,17 @@ def cont [topology α] [topology β] (f : α → β) : Prop :=
 
 class metric := (dist : α → α → ℝ)
 
-instance metric.to_topology [metric α] : topology α :=
+def metric.to_topology [metric α] : topology α :=
 ⟨{s : set α | ∀(x:α), x∈s → ∃ε>0, ∀y, metric.dist x y < ε → y ∈ s}⟩
+
+local attribute [instance] metric.to_topology
 
 instance real_topology : topology ℝ :=
 ⟨{s : set ℝ | ∀(x:ℝ), x∈s → ∃ε>0, ∀y, abs (x - y) < ε → y ∈ s}⟩
 
 -- now in each metric dist is continuous
 
-lemma cont_dist [metric α] (a : α) : cont α ℝ (metric.dist a) := sorry
+private lemma cont_dist [metric α] (a : α) : cont α ℝ (metric.dist a) := sorry
 
 -- we have a product topology
 instance prod_topology [topology α] [topology β] : topology (α × β) :=
@@ -93,3 +95,39 @@ cont_dist (α × β) (a, b)
   -- this doesn't work! the product metric is not defeq  to the product topology!
 
 end
+
+section solution1
+variables (α : Type*) (β : Type*)
+
+class metric_induced_topology [metric α] [topology α] : Prop :=
+(open_sets_iff :
+  ∀s, s ∈ topology.open_sets α ↔ (∀(x:α), x∈s → ∃ε>0, ∀y, metric.dist x y < ε → y ∈ s))
+
+private lemma cont_dist
+  [topology α] [metric α] [metric_induced_topology α] (a : α) :
+  cont α ℝ (metric.dist a) := sorry
+
+instance prod.metric_induced_topology
+  [topology α] [metric α] [metric_induced_topology α]
+  [topology β] [metric β] [metric_induced_topology β] :
+  metric_induced_topology (α × β) :=
+sorry
+
+example
+  [topology α] [metric α] [metric_induced_topology α]
+  [topology β] [metric β] [metric_induced_topology β]
+  (a : α) (b : β) :
+  cont (α × β) ℝ (metric.dist (a, b)) :=
+cont_dist (α × β) (a, b) -- TADA!!
+
+end solution1
+
+section solution2
+variables (α : Type*) (β : Type*)
+
+class metric_v2 extends topology α :=
+(dist : α → α → ℝ)
+(open_sets_iff :
+  ∀s, s ∈ topology.open_sets α ↔ (∀(x:α), x∈s → ∃ε>0, ∀y, dist x y < ε → y ∈ s))
+
+end solution2
