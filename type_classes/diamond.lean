@@ -1,5 +1,30 @@
 import analysis.real
 
+/-
+
+  Type classes:
+    * metric
+    * topology
+
+  Instances:
+    * canonical topology: metric → topology
+    * metric & topology for ℝ: metric ℝ, topology ℝ
+    * product topology and product metric
+
+  Problem:
+
+    M(α) × M(β)  →  M(α × β)
+      ↓  ×   ↓          ↓
+    T(α) × T(β)  →  T(α × β)
+
+  We need to ensure that both paths are **definitional** equal:
+
+    M(α) × M(β) →  M(α × β)   → T(α × β)
+    M(α) × M(β) → T(α) × T(β) → T(α × β)
+
+-/
+
+
 section
 noncomputable theory
 

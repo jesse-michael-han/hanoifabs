@@ -45,3 +45,9 @@ Type classes are the go to approach to model mathematical abstractions.
       annoying to use, needs a long list of parameters for each abstract definition / theorem
 
 -/
+
+/-
+
+TODO: reading the type class inference trace
+
+-/
