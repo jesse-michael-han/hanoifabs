@@ -158,4 +158,27 @@ should be activated by the user case by case.
 
 -/
 
+/- simp rules:
 
+Write rules generic:
+
+  bad:    x ^ (n + 1) = x ^ n * x
+
+  good:   x ^ 1 = x
+          x ^ (n + m) = x ^ n * x ^ m
+
+General rule: `l = r`
+  * have as much variables in `l` as possible
+  * reduce them in `r`
+  * `l` should be already in rewritten form
+  * also: all variables in `r`, and in your assumptions need to occur already in `l`
+    (with the exception of type class instances)
+
+take care of decidability:
+
+  [decidable p] [decidable (λx, ¬ p x)] -- sometimes necessary
+
+
+
+
+-/
