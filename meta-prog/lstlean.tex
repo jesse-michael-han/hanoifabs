@@ -28,8 +28,9 @@ exists, if, dif, then, else, assume, take, obtain, from, aliases, register_simp_
 mutual, def, run_command
 },
 
-% Sorts
-morekeywords=[2]{Type, Prop, Type*, Type₀, Type₁, Type₂, Type₃},
+% Types
+morekeywords=[2]{expr, name, level, list, binder_info, bool, nat, macro_def,
+Sort*, Sort, Type, Prop, Type*, Type₀, Type₁, Type₂, Type₃},
 
 % tactics, list taken from lean-syntax.el
 % morekeywords=[3]{
@@ -259,10 +260,10 @@ identifierstyle={\ttfamily\color{black}},
 keywordstyle=[1]{\ttfamily\color{keywordcolor}},
 
 % Style for sorts
-keywordstyle=[2]{\ttfamily\color{sortcolor}},
+keywordstyle=[2]{\ttfamily\color{typecolor}},
 
-% Style for tactics keywords
-% keywordstyle=[3]{\ttfamily\color{tacticcolor}},
+% Style for meta constants
+% keywordstyle=[3]{\ttfamily\color{typecolor}},
 
 % Style for attributes
 % keywordstyle=[4]{\ttfamily\color{attributecolor}},

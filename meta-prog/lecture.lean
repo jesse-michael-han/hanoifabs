@@ -78,4 +78,12 @@ example : true := by do
   tactic.trace e'.to_raw_fmt,
   return ()
 
+open tactic expr
 
+example : true := by do
+  t ← mk_meta_var (sort (level.zero.succ)),
+  x ← return $ local_const `x `x binder_info.default t,
+  mt ← infer_type x,
+  trace (to_fmt "mt: " ++ to_fmt mt),
+  e ← to_expr ``(%%x  = 0),
+  get_assignment mt >>= trace

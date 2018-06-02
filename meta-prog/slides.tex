@@ -12,8 +12,8 @@
   \usepackage{color}
   \definecolor{keywordcolor}{rgb}{0.7, 0.1, 0.1}   % red
   \definecolor{commentcolor}{rgb}{0.4, 0.4, 0.4}   % grey
-  \definecolor{symbolcolor}{rgb}{0.0, 0.1, 0.6}    % blue
-  \definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
+  \definecolor{symbolcolor}{rgb}{0.5, 0.3, 0.1}    % orange
+  \definecolor{typecolor}{rgb}{0.0, 0.1, 0.6}      % blue
 
   \usepackage{listings}
   \def\lstlanguagefiles{lstlean.tex}
@@ -26,8 +26,6 @@
   \author{Johannes Hölzl \\ \includegraphics{vulogo.png}}
   \date{Hanoi FABS Summer School 2018}
 
-  \newcommand{\kw}[1]{{\color{green!33!black}\ensuremath{\mathtt{#1}}}}
-  \newcommand{\ident}[1]{{\color{blue!33!black}\ensuremath{\mathtt{#1}}}}
   \newcommand{\sect}[1]{\begin{frame}
   \begin{center} \Huge{\usebeamercolor[fg]{structure} #1} \end{center}
   \end{frame}
@@ -99,7 +97,7 @@
 
 \end{frame}
 
-\begin{frame}{Definitions in Lean}
+\begin{frame}{Object logic vs Meta constants}
   \begin{tikzpicture}
     \draw[opacity = 0.5, fill=green] (0,  0.7) ellipse [x radius=3.5cm, y radius=2.5cm];
     \draw[opacity = 0.5, pattern=crosshatch] (0, -0.7) ellipse [x radius=3.5cm, y radius=2.5cm];
@@ -114,33 +112,177 @@
 
 \end{frame}
 
-\begin{frame}{What is a Tactic?}
+\sect{Lean in \lstinline{meta} Lean}
+
+\begin{frame}[fragile]{How is Lean represented in \lstinline{meta} Lean?}
+  \lstinline{meta} types to represent the object logic:
+  \begin{description}
+    \item[\texttt{name}] hierarchical names \\
+      special syntax: \verb$`namespace.name$
+    \item[\texttt{level}] represents universe levels
+    \item[\texttt{expr}] represents expressions
+  \end{description}
+\end{frame}
+
+\begin{frame}[fragile]{Expressions in \lstinline{meta} Lean}
+\begin{lstlisting}
+meta inductive expr (elaborated : bool := tt)
+| const    {} : name → list level → expr
+| app         : expr → expr → expr
+| elet        : name → expr → expr → expr → expr
+| sort     {} : level → expr
+
+| lam         :
+    name → binder_info → expr → expr → expr
+| pi          :
+    name → binder_info → expr → expr → expr
+| var      {} : nat → expr
+
+| local_const :
+    name → name → binder_info → expr → expr
+| mvar        : name → name → expr → expr
+| macro       : macro_def → list expr → expr
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Expressions -- Base}
+  \lstinline$const (n : name) (u : list level)$ \\
+  \quad $c.\{u_1 \ldots u_n\}$ \\[2ex]
+  \lstinline$app (f x : expr)$ \\
+  \quad $f~x$ \\[2ex]
+  \lstinline$elet (pp : name) (ty t body : expr)$ \\
+  \quad $let~pp : ty := t~in~body$ \\[2ex]
+  \lstinline$sort (l : level)$ \\
+  \quad \lstinline$Sort l$, \lstinline$Type l$, or \lstinline$Prop$ \\[2ex]
+
+  \textbf{Example:} $1 + 0 = 1$ \\
+   e.g. \lstinline$@eq.{0} nat (nat.add nat.one nat.zero) nat.one$
+\begin{lstlisting}
+app (app (app (const `eq [1]) (const `nat []))
+  (app (app (const `nat.add []) (const `nat.one [])) (const `nat.zero [])))
+  (const `nat.one [])
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Expressions - Binders \& Bound Variables}
+  \lstinline$lam (pp : name) bi (type : expr) (body : expr)$ \\
+  \quad $\lambda (pp : type), body$ \\[2ex]
+  \lstinline$pi (pp : name) bi (type : expr) (body : expr)$ \\
+  \quad $\Pi (pp : type), body$ \\[2ex]
+
+  How are variables represented in the body of \texttt{lam} and \texttt{pi}?
   \begin{itemize}
-    \item Basic idea: $\texttt{a\_tactic} : \texttt{expr} \rightarrow \texttt{expr}$
-    \begin{description}
-      \item[input] the target as proposition (or type)
-      \item[result] is a proof (inhabiting term) of the target
-    \end{description}
-    \item Tactics can fail
-    \item Tactics can leave holes in the term
-    \item Tactics need access to: local context, attributes, declaration, options, \ldots
-    \item We want a framework to construct tactics
+    \item \lstinline{var n} is a \emph{bound variable}, referencing a $\lambda$ or $\Pi$
+    \item $n$ is the \emph{distance} to the $\lambda$ or $\Pi$ (deBruijn index)
+    \item \textbf{Example:} $\lambda (x~y : \mathbb{N}), f~x~y$
+\begin{lstlisting}
+lam `x default `nat (lam `y default `nat
+  (app (app (const `f []) (var 1)) (var 0)))
+\end{lstlisting}
+    \item \textbf{Advantage:} Expression can be just composed. We don't need to take care of bound variables.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Expressions - Local Constants}
+  \textbf{Problem:} In the body of a $\lambda$ or $\Pi$ there is only \verb|var n|! \\
+  \quad There is no informations about this variables! \\[1ex]
+
+  \textbf{Solution:} Replace \lstinline{var} by \lstinline{local_const}!
+  \lstinline{local_const unique pp bi type}
+  \begin{description}
+    \item[unique] Unique identifier
+    \item[pp] User visible (pretty printed) name
+    \item[bi] Binder info (implicit, type class instance, \ldots)
+    \item[type] The type of the variable
+  \end{description}
+
+  \begin{itemize}
+    \item Open a $\lambda$ or $\Pi$: replace bound variable by local constant
+    \item Close a $\lambda$ or $\Pi$: replace a local constant by bound variable
+    \item There are also local universe constants
   \end{itemize}
 
 \end{frame}
 
-\begin{frame}[fragile]{How is Lean represented in Lean?}
-  \begin{description}
-    \item[\texttt{name}] Hierarchical names
-    \item[\texttt{level}] Represents universe levels as datastructure
-    \item[\texttt{expr}] Represents expressions as datastructure
-  \end{description}
-  \begin{lstlisting}
-    meta inductive expr
-    | var | sort | const | app | lam | pi | elet
-    | macro | mvar | local_const
-    \end{lstlisting}
+\begin{frame}[fragile]{Examples}
+
+\lstinline{∀(α:Type) [monoid α] (a:α), a * 1 = a}
+
+\begin{lstlisting}
+pi `α default (sort 1)
+  (pi `i inst (app (const `monoid [0]) (var 0))
+    (pi `a default (var 1)
+      (app (app (app (const `eq [1]) (var 2))
+        (app (app (app (app (const `mul [0]) (var 2))
+            (var 1)) (var 0))
+          (app (app (const `one [0]) (var 2))
+            (var 1))))
+        (var 0))))
+\end{lstlisting}
 \end{frame}
 
+
+\begin{frame}[fragile]{Expressions - Metavariables}
+
+\lstinline$mvar (unique : name) (pp : name) (type : expr)$
+
+\begin{itemize}
+\item Metavariables (a.k.a. schematic or existential variables) are holes in expressions.
+   \textbf{To be filled in later.}
+\item This happens explicitly or by elaboration (using unification)
+\item \textbf{Example}:
+  Create $x : ?m$, elaborate $x = (0 : \mathbb{N})$, then: $?m := \mathbb{N}$.
+\item Is also used to represent goals!
+\end{itemize}
+
+\end{frame}
+
+\sect{Tactic framework}
+
+\begin{frame}[fragile]{What is a Tactic?}
+  \textbf{Basic idea:}
+  \begin{center} \lstinline$tactic := expr → expr$ \end{center}
+  \begin{description}
+    \item[input] the target as proposition (or type)
+    \item[result] is a proof (inhabiting term) of the target
+  \end{description}
+
+  \textbf{But this is not enough:}
+  \begin{itemize}
+    \item Tactics can fail, or return data
+    \item Tactics can leave holes in the term, operate on multiple goals
+    \item Tactics need access to: local context, attributes, declaration, options,
+      meta variables\ldots
+    \item We need a tactic state, or a \emph{tactic monad}:
+  \end{itemize}
+\begin{lstlisting}
+tactic α :=
+  tactic_state → (α × tactic_state) + error
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[fragile]{Tactic State}
+  \begin{tikzpicture}
+    \fill[blue!50!white] (-5, 0) rectangle (5, 8) ;
+    \node at (-5, 7.7) [right] { \textbf{Tactic State} };
+
+    \fill[orange] (-1.9, 7.5) rectangle (4.8, 1.5) ;
+    \node at (-1.9, 7.2) [right] {Metavariables} ;
+
+    \fill[orange] (-4.9, 7.5) rectangle (-2.1, 1.5) ;
+    \node at (-4.9, 7.2) [right] {Environment} ;
+
+    \fill[orange] (-4.9, 1.3) rectangle (-2.1, 0.1) ;
+    \node at (-4.9, 1) [right] {Options} ;
+
+    \fill[orange] (-1.9, 1.3) rectangle (1.8, 0.1) ;
+    \node at (-1.9, 1) [right] {Goals} ;
+
+    \fill[orange] (2, 1.3) rectangle (4.8, 0.1) ;
+    \node at (2, 1) [right] {Main Goal} ;
+
+  \end{tikzpicture}
+\end{frame}
 
 \end{document}
