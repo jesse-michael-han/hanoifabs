@@ -87,3 +87,4 @@ example : true := by do
   trace (to_fmt "mt: " ++ to_fmt mt),
   e ← to_expr ``(%%x  = 0),
   get_assignment mt >>= trace
+

@@ -264,25 +264,67 @@ tactic α :=
 
 \begin{frame}[fragile]{Tactic State}
   \begin{tikzpicture}
-    \fill[blue!50!white] (-5, 0) rectangle (5, 8) ;
-    \node at (-5, 7.7) [right] { \textbf{Tactic State} };
+    \fill[blue!50!white] (-5, 0) rectangle (5, 7.7) ;
 
     \fill[orange] (-1.9, 7.5) rectangle (4.8, 1.5) ;
-    \node at (-1.9, 7.2) [right] {Metavariables} ;
+    \node at (-1.9, 7.5) [below right] {
+      \begin{varwidth}{6cm}
+        \textbf{Metavariables} \\
+
+\begin{lstlisting}
+?m0 : p:Prop ⊢ p → false
+?m1 : α:Type, a : α ⊢ a = a
+⋯?mn : α:Type, a : α ⊢ …
+\end{lstlisting}
+  ~\\[2em]
+      Assignments: \lstinline$?m2 := rfl, …$
+      \end{varwidth}
+    } ;
 
     \fill[orange] (-4.9, 7.5) rectangle (-2.1, 1.5) ;
-    \node at (-4.9, 7.2) [right] {Environment} ;
+    \node at (-4.9, 7.5) [below right] {\textbf{Environment}} ;
+
+    \node at (-4.9, 7.1) [below right] {
+      \begin{varwidth}{6cm}
+        Declarations:
+\begin{lstlisting}
+true : Prop
+nat : Type
+zero : nat
+\end{lstlisting}
+      \dots \\[2em]
+      Attributes, \\
+      Fresh Names, \\
+      etc.
+
+      \end{varwidth}
+    };
 
     \fill[orange] (-4.9, 1.3) rectangle (-2.1, 0.1) ;
-    \node at (-4.9, 1) [right] {Options} ;
+    \node at (-4.9, 1.3) [below right] {
+      \begin{varwidth}{2.8cm}
+        \textbf{Options} \\
+        \lstinline$pp.all=tt,..$
+      \end{varwidth} } ;
 
     \fill[orange] (-1.9, 1.3) rectangle (1.8, 0.1) ;
-    \node at (-1.9, 1) [right] {Goals} ;
+    \node at (-1.9, 1.3) [below right] {
+      \begin{varwidth}{3.7cm}
+        \textbf{Goals} \\
+        \lstinline$[?m0, ..., ?mn]$
+      \end{varwidth}
+    } ;
 
-    \fill[orange] (2, 1.3) rectangle (4.8, 0.1) ;
-    \node at (2, 1) [right] {Main Goal} ;
+    \fill[orange] (2, 1.3) rectangle (4.8 , 0.1) ;
+    \node at (2, 1.3) [below right] {
+      \begin{varwidth}{2.8cm}
+        \textbf{Main Goal} \\
+        \lstinline$?m0$
+      \end{varwidth}
+    } ;
 
   \end{tikzpicture}
 \end{frame}
 
 \end{document}
+
