@@ -148,12 +148,16 @@ meta inductive expr (elaborated : bool := tt)
 \begin{frame}[fragile]{Expressions -- Base}
   \lstinline$const (n : name) (u : list level)$ \\
   \quad $c.\{u_1 \ldots u_n\}$ \\[2ex]
+\pause
   \lstinline$app (f x : expr)$ \\
   \quad $f~x$ \\[2ex]
+  \pause
   \lstinline$elet (pp : name) (ty t body : expr)$ \\
   \quad $let~pp : ty := t~in~body$ \\[2ex]
+\pause
   \lstinline$sort (l : level)$ \\
   \quad \lstinline$Sort l$, \lstinline$Type l$, or \lstinline$Prop$ \\[2ex]
+\pause
 
   \textbf{Example:} $1 + 0 = 1$ \\
    e.g. \lstinline$@eq.{0} nat (nat.add nat.one nat.zero) nat.one$
@@ -169,9 +173,10 @@ app (app (app (const `eq [1]) (const `nat []))
   \quad $\lambda (pp : type), body$ \\[2ex]
   \lstinline$pi (pp : name) bi (type : expr) (body : expr)$ \\
   \quad $\Pi (pp : type), body$ \\[2ex]
+  \pause
 
   How are variables represented in the body of \texttt{lam} and \texttt{pi}?
-  \begin{itemize}
+  \begin{itemize}[<+->]
     \item \lstinline{var n} is a \emph{bound variable}, referencing a $\lambda$ or $\Pi$
     \item $n$ is the \emph{distance} to the $\lambda$ or $\Pi$ (deBruijn index)
     \item \textbf{Example:} $\lambda (x~y : \mathbb{N}), f~x~y$
@@ -186,7 +191,7 @@ lam `x default `nat (lam `y default `nat
 \begin{frame}[fragile]{Expressions - Local Constants}
   \textbf{Problem:} In the body of a $\lambda$ or $\Pi$ there is only \verb|var n|! \\
   \quad There is no informations about this variables! \\[1ex]
-
+\pause
   \textbf{Solution:} Replace \lstinline{var} by \lstinline{local_const}!
   \lstinline{local_const unique pp bi type}
   \begin{description}
@@ -195,7 +200,7 @@ lam `x default `nat (lam `y default `nat
     \item[bi] Binder info (implicit, type class instance, \ldots)
     \item[type] The type of the variable
   \end{description}
-
+\pause
   \begin{itemize}
     \item Open a $\lambda$ or $\Pi$: replace bound variable by local constant
     \item Close a $\lambda$ or $\Pi$: replace a local constant by bound variable
@@ -226,7 +231,7 @@ pi `α default (sort 1)
 
 \lstinline$mvar (unique : name) (pp : name) (type : expr)$
 
-\begin{itemize}
+\begin{itemize}[<+->]
 \item Metavariables (a.k.a. schematic or existential variables) are holes in expressions.
    \textbf{To be filled in later.}
 \item This happens explicitly or by elaboration (using unification)
@@ -325,6 +330,10 @@ zero : nat
 
   \end{tikzpicture}
 \end{frame}
+
+% basic tactics: intro, apply, induction
+
+% antiquotations, reflected, to_expr
 
 \end{document}
 
